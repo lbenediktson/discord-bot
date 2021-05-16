@@ -85,7 +85,7 @@ const createAndPlayAudio = (username, channelID) => {
 			console.log('fejl på linje 85 [createAndPlayAudio]:', err)
 		}
 		console.log('Audio content written to file: output.mp3')
-		setTimeout(playAudio(channelID, username), 1200)
+		setTimeout(() => playAudio(channelID, username), 1200)
 	}
 	quickStart()
 }
@@ -106,7 +106,7 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 					console.log('files [voiceStateUpdate]:', files, `username: ${username}`)
 					console.log(files.indexOf(`${username}.mp3`))
 					;-1 !== files.indexOf(`${username}.mp3`)
-						? setTimeout(playAudio(newUserChannel, username), 1200)
+						? setTimeout(() => playAudio(newUserChannel, username), 1200)
 						: null// createAndPlayAudio(username, newUserChannel)
 				}
 			})
