@@ -29,11 +29,11 @@ const playAudio = async (channelID, username) => {
 			})
 			// Always remember to handle errors appropriately!
 			dispatcher.on('error', (err) => {
-				console.log(err)
+				console.log('fejl på linje 32 [playAudio]:', err)
 			})
 		})
 		.catch((err) => {
-			console.log(err)
+			console.log('fejl på linje 36 [playAudio]:', err)
 			connection.disconnect()
 		})
 }
@@ -74,7 +74,7 @@ const createAndPlayAudio = (username, channelID) => {
 			// Performs the text-to-speech request
 			const [response] = await client.synthesizeSpeech(request)
 		} catch (err) {
-			console.log(err)
+			console.log('fejl på linje 77: [createAndPlayAudio]', err)
 		}
 
 		// Write the binary audio content to a local file
@@ -82,7 +82,7 @@ const createAndPlayAudio = (username, channelID) => {
 		try {
 			await writeFile(`./users/welcome/${username}.mp3`, response.audioContent, 'binary')
 		} catch (err) {
-			console.log(err)
+			console.log('fejl på linje 85 [createAndPlayAudio]:', err)
 		}
 		console.log('Audio content written to file: output.mp3')
 		setTimeout(playAudio(channelID, username), 1200)
@@ -116,6 +116,7 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 		if (user) {
 			// createAndPlayAudio(user.username, 'bye')
 		} else {
+			console.log('fejl på 119')
 		}
 	}
 })
