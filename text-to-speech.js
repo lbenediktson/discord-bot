@@ -20,9 +20,7 @@ const playAudio = async (channelID, username) => {
 			.join()
 			.then((connection) => {
 				channelConnection = connection
-				const dispatcher = connection.play(
-					`./users/welcome/${username}.mp3`
-				)
+				const dispatcher = connection.play(`./users/welcome/${username}.mp3`)
 				dispatcher.on('start', () => {
 					console.log('audio.mp3 is now playing!')
 				})
@@ -62,7 +60,7 @@ const createAndPlayAudio = (username, channelID) => {
 		} else if (username === 'socialakavet') {
 			text = `jimmy joint in the house`
 		} else {
-			text = `hva så ${username}!`
+			text = `hva så ${username}, du stadig en fucking bums!!`
 		}
 
 		// Construct the request
@@ -74,15 +72,20 @@ const createAndPlayAudio = (username, channelID) => {
 			audioConfig: { audioEncoding: 'MP3' },
 		}
 
-		// Performs the text-to-speech request
-		const [response] = await client.synthesizeSpeech(request)
+		try {
+			// Performs the text-to-speech request
+			const [response] = await client.synthesizeSpeech(request)
+		} catch (err) {
+			console.log(err)
+		}
+
 		// Write the binary audio content to a local file
 		const writeFile = util.promisify(fs.writeFile)
-		await writeFile(
-			`./users/welcome/${username}.mp3`,
-			response.audioContent,
-			'binary'
-		)
+		try {
+			await writeFile(`./users/welcome/${username}.mp3`, response.audioContent, 'binary')
+		} catch (err) {
+			console.log(err)
+		}
 		console.log('Audio content written to file: output.mp3')
 		playAudio(channelID, username)
 	}
@@ -95,11 +98,9 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 
 	// new user joins voice channel
 	if (!oldUserChannel && newUserChannel) {
-		const username = bot.users.cache
-			.get(newMember.id)
-			.username.toLowerCase() // Getting the user by ID.
+		const username = bot.users.cache.get(newMember.id).username.toLowerCase() // Getting the user by ID.
 		console.log(username)
-		if ('karsepik-bot' !== username && 'rythm' !== username ) {
+		if ('karsepik-bot' !== username && 'rythm' !== username) {
 			fs.readdir(`./users/welcome/`, (err, files) => {
 				if (err) {
 					console.log(err)
