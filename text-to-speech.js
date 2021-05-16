@@ -15,29 +15,27 @@ let channelConnection
 
 const playAudio = async (channelID, username) => {
 	const channel = bot.channels.cache.get(channelID)
-	setTimeout(() => {
-		channel
-			.join()
-			.then((connection) => {
-				channelConnection = connection
-				const dispatcher = connection.play(`./users/welcome/${username}.mp3`)
-				dispatcher.on('start', () => {
-					console.log('audio.mp3 is now playing!')
-				})
-				dispatcher.on('finish', () => {
-					console.log('audio.mp3 has finished playing!')
-					connection.disconnect()
-				})
-				// Always remember to handle errors appropriately!
-				dispatcher.on('error', (err) => {
-					console.log(err)
-				})
+	channel
+		.join()
+		.then((connection) => {
+			channelConnection = connection
+			const dispatcher = connection.play(`./users/welcome/${username}.mp3`)
+			dispatcher.on('start', () => {
+				console.log('audio.mp3 is now playing!')
 			})
-			.catch((err) => {
-				console.log(err)
+			dispatcher.on('finish', () => {
+				console.log('audio.mp3 has finished playing!')
 				connection.disconnect()
 			})
-	}, 1200)
+			// Always remember to handle errors appropriately!
+			dispatcher.on('error', (err) => {
+				console.log(err)
+			})
+		})
+		.catch((err) => {
+			console.log(err)
+			connection.disconnect()
+		})
 }
 
 const createAndPlayAudio = (username, channelID) => {
@@ -87,7 +85,7 @@ const createAndPlayAudio = (username, channelID) => {
 			console.log(err)
 		}
 		console.log('Audio content written to file: output.mp3')
-		playAudio(channelID, username)
+		setTimeout(playAudio(channelID, username), 1200)
 	}
 	quickStart()
 }
@@ -106,7 +104,7 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 					console.log(err)
 				} else if (files) {
 					;-1 !== files.indexOf(`${username}.mp3`)
-						? playAudio(newUserChannel, username)
+						? setTimeout(playAudio(newUserChannel, username), 1200)
 						: createAndPlayAudio(username, newUserChannel)
 				}
 			})
