@@ -15,29 +15,31 @@ let channelConnection
 
 const playAudio = async (channelID, username) => {
 	const channel = bot.channels.cache.get(channelID)
-	channel
-		.join()
-		.then((connection) => {
-			channelConnection = connection
-			const dispatcher = connection.play(
-				`./users/welcome/${username}.mp3`
-			)
-			dispatcher.on('start', () => {
-				console.log('audio.mp3 is now playing!')
+	setTimeout(() => {
+		channel
+			.join()
+			.then((connection) => {
+				channelConnection = connection
+				const dispatcher = connection.play(
+					`./users/welcome/${username}.mp3`
+				)
+				dispatcher.on('start', () => {
+					console.log('audio.mp3 is now playing!')
+				})
+				dispatcher.on('finish', () => {
+					console.log('audio.mp3 has finished playing!')
+					connection.disconnect()
+				})
+				// Always remember to handle errors appropriately!
+				dispatcher.on('error', (err) => {
+					console.log(err)
+				})
 			})
-			dispatcher.on('finish', () => {
-				console.log('audio.mp3 has finished playing!')
+			.catch((err) => {
+				console.log(err)
 				connection.disconnect()
 			})
-			// Always remember to handle errors appropriately!
-			dispatcher.on('error', (err) => {
-				console.log(err)
-			})
-		})
-		.catch((err) => {
-			console.log(err)
-			connection.disconnect()
-		})
+	}, 1200)
 }
 
 const createAndPlayAudio = (username, channelID) => {
@@ -54,7 +56,7 @@ const createAndPlayAudio = (username, channelID) => {
 		} else if (username === 'jacob') {
 			text = `jacobo vil spille`
 		} else if (username === 'lbenediktson') {
-			text = `lukas benediktson er klar til at carry alle`
+			text = `Niclas Sefidi er online.`
 		} else if (username === 'piaerbillig') {
 			text = `albino bertram`
 		} else if (username === 'socialakavet') {
