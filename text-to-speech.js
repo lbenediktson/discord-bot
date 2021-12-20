@@ -4,7 +4,6 @@ const Discord = require('discord.js')
 const fs = require('fs')
 const { createHash } = require('crypto');
 const util = require('util')
-const crypto = require('crypto');
 const bot = new Discord.Client()
 
 require('dotenv').config()
@@ -19,7 +18,7 @@ function getUserMessage(context, username) {
 		default: 'hva så motherfucker',
 		welcome: {
 			wiuf: 'Er I klar til at tabe? Planetens største woke klunke er joinet.',
-			jacob: 'jacobo vil spille',
+			jacob: 'jacobo vil spille pik',
 			lbenediktson: 'lukas den største champion. what you have to say to joe biden? bing bong motherfucker',
 			piaerbillig: 'albino bertram',
 			socialakavet: 'jimmy joint in the house',
@@ -32,13 +31,13 @@ function getUserMessage(context, username) {
 		   userMessages.default
 }
 
-function getHashFromString(string) {
+function createHashFromString(string) {
 	const hash = createHash('sha256')
 	hash.update(string)
 	return hash.digest('hex')
 }
 
-// bot.login(apiKeys.discord)
+bot.login(apiKeys.discord)
 
 bot.on('ready', () => console.log('logged ind'))
 
@@ -49,19 +48,10 @@ const playAudio = async (channelID, filename) => {
 	channel
 		.join()
 		.then((connection) => {
-			// const dispatcher = connection.play(`./users/welcome/wiuf.mp3`) // DEV
-			console.log({userAudioPath})
 			const dispatcher = connection.play(userAudioPath) // PROD
-			dispatcher.on('start', () => {
-				console.log('audio is now playing from: ' + userAudioPath)
-			})
-			dispatcher.on('finish', () => {
-				console.log('audio has finished playing')
-				connection.disconnect()
-			})
-			dispatcher.on('error', (err) => {
-				console.log('fejl på linje 32 [playAudio]:', err)
-			})
+			// dispatcher.on('start', () => console.log('audio is now playing from: ' + userAudioPath))
+			dispatcher.on('finish', () => connection.disconnect())
+			dispatcher.on('error', (err) => console.log('fejl i [playAudio]:', err))
 		})
 		.catch((err) => {
 			console.log('Error in [playAudio]:', err)
@@ -70,8 +60,8 @@ const playAudio = async (channelID, filename) => {
 }
 
 const createAndPlayAudio = (username, channelID, hash = undefined) => {
-	console.log(hash)
 	if (!hash) hash = username
+	console.log('Creates audio for ' + hash)
 	// Creates a client
 	const client = new textToSpeech.TextToSpeechClient()
 	let speechResponse
@@ -121,8 +111,9 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 				if (err) {
 					console.log(err)
 				} else if (files) {
-					const filenameHash = getHashFromString(getUserMessage('welcome', username))
-					// createAndPlayAudio(username, newUserChannel, filenameHash)
+					const userMessage = getUserMessage('welcome', username)
+					const filenameHash = createHashFromString(userMessage)
+
 					;-1 !== files.indexOf(`${filenameHash}.mp3`)
 						? setTimeout(() => playAudio(newUserChannel, filenameHash), timeoutBeforePlaying)
 						: createAndPlayAudio(username, newUserChannel, filenameHash)
