@@ -57,7 +57,7 @@ function getUserMessage(context, username) {
 		welcome: {
 			wiuf: 'Er I klar til at tabe? Planetens største woke klunke er joinet.',
 			jacob: 'jacobo vil spille pik. what you wanna tell joe biden right now? What is up, baby. take me out to dinner. AYYOOOOO',
-			lbenediktson: 'lukas den største champion. what you have to say to joe biden? bing bong motherfucker',
+			lbenediktson: 'lukas gangster den største champion. what you have to say to joe biden? bing bong motherfucker',
 			piaerbillig: 'albino bertram er oppe i din bitch. bing. bong. motherfucker.',
 			socialakavet: 'jimmy joint in the house',
 			kasperuttrup: 'Chris Peacock op i den bitch. Corona-alarm, Corona-alarm, Corona-alarm. Manden har i øvrigt 11 centimeter lange hængenosser.',
@@ -75,7 +75,7 @@ function getUserMessage(context, username) {
 //	Initialize Discord Bot
 // –––––––––––––––––––––––––––––––––––––––––––––––––––
 
-// bot.login(apiKeys.discord)
+bot.login(apiKeys.discord)
 bot.on('ready', () => console.log('logged ind'))
 bot.on('voiceStateUpdate', (oldMember, newMember) => {
 	const newUserChannel = newMember.channelID
@@ -110,28 +110,22 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 //	Text to Speech
 // –––––––––––––––––––––––––––––––––––––––––––––––––––
 
-async function createAndPlayAudio(username, channelID, hash = undefined) {
-	if (!hash) hash = username
-	console.log('Creates audio for ' + hash)
+async function createAndPlayAudio(username, channelID, filename) {
+	console.log('Creates audio for ' + filename + '.mp3')
 
 	// Creates a client
 	const client = new textToSpeech.TextToSpeechClient()
-	let speechResponse
 	
 	// The text to synthesize
 	let text = getUserMessage('welcome', username)
 
 	// Construct the request
-	const request = getSpeechRequest()
+	request = getSpeechRequest(text)
 
-	const [response] = client.synthesizeSpeech(request)
-	if (!response.audioContent) throw new Error(response)
-	const { audoContent } = response
-
-	promisifiedWriteFile(`./users/welcome/${hash}.mp3`, audoContent, 'binary')
+	const [response] = await client.synthesizeSpeech(request)
+	promisifiedWriteFile(`./users/welcome/${filename}.mp3`, response.audioContent, 'binary')
+		.then(setTimeout(() => playAudio(channelID, filename), meta.timeout))
 		.catch(console.error)
-
-	setTimeout(() => playAudio(channelID, hash), meta.timeout)
 }
 
 
@@ -164,13 +158,14 @@ function playAudio(channelID, filename) {
 //	Utility functions
 // –––––––––––––––––––––––––––––––––––––––––––––––––––
 
-function getSpeechRequest() {
-	return { input: { text: text },
+function getSpeechRequest(text) {
+	return {
+		input: { text },
+		audioConfig: { audioEncoding: 'MP3' }, // type of audio encoding
 		voice: {
 			name: meta.speechName.name,
 			languageCode: meta.speechName.languageCode,
 		},
-		audioConfig: { audioEncoding: 'MP3' }, // type of audio encoding
 	}
 }
 
