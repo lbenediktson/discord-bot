@@ -30,4 +30,4 @@ const createAudio = (text) => {
 	quickStart()
 }
 
-createAudio('Er I klar til at tabe? Planetens største klunke, den mest woke mand på jorden. I ved det! Kristian vil spille lidt warzone')
+createAudio('Chris Peacock op i den bitch. Corona-alarm, Corona-alarm, Corona-alarm. Manden har i øvrigt 11 centimeter lange hængenosser.')

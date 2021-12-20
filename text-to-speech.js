@@ -5,35 +5,38 @@ const fs = require('fs')
 const util = require('util')
 const bot = new Discord.Client()
 
-bot.login('Nzk4Njk2NDQ2NzQ0MzMwMjYx.X_4yBw.4oEuiHirlyHwO5TMpKKF2uJpRtA')
+require('dotenv').config()
 
-bot.on('ready', () => {
-	console.log('logged ind')
-})
+const apiKeys = {
+	discord: process.env.DISCORD_BOT_API
+}
 
-let channelConnection
+bot.login(apiKeys.discord)
+
+bot.on('ready', () => console.log('logged ind'))
 
 const playAudio = async (channelID, username) => {
 	const channel = bot.channels.cache.get(channelID)
+	const userAudioPath = `./users/welcome/${username}`
+
 	channel
 		.join()
 		.then((connection) => {
-			channelConnection = connection
-			const dispatcher = connection.play(`./users/welcome/${username}.mp3`)
+			const dispatcher = connection.play(`./users/welcome/wiuf.mp3`)
+			// const dispatcher = connection.play(userAudioPath)
 			dispatcher.on('start', () => {
-				console.log('audio.mp3 is now playing!')
+				console.log('audio is now playing from: ' + userAudioPath)
 			})
 			dispatcher.on('finish', () => {
-				console.log('audio.mp3 has finished playing!')
+				console.log('audio has finished playing')
 				connection.disconnect()
 			})
-			// Always remember to handle errors appropriately!
 			dispatcher.on('error', (err) => {
 				console.log('fejl på linje 32 [playAudio]:', err)
 			})
 		})
 		.catch((err) => {
-			console.log('fejl på linje 36 [playAudio]:', err)
+			console.log('Error in [playAudio]:', err)
 			connection.disconnect()
 		})
 }
@@ -41,40 +44,32 @@ const playAudio = async (channelID, username) => {
 const createAndPlayAudio = (username, channelID) => {
 	// Creates a client
 	const client = new textToSpeech.TextToSpeechClient()
+	quickStart()
 	async function quickStart() {
 		// The text to synthesize
 		let text
 
-		console.log(username)
-
-		if (username === 'wiuf') {
-			text = 'Er I klar til at tabe? Planetens største woke klunke er joinet.'
-		} else if (username === 'jacob') {
-			text = `jacobo vil spille`
-		} else if (username === 'lbenediktson') {
-			text = `Niclas Sefidi er online.`
-		} else if (username === 'piaerbillig') {
-			text = `albino bertram`
-		} else if (username === 'socialakavet') {
-			text = `jimmy joint in the house`
-		} else {
-			text = `hva så ${username}, du stadig en fucking bums!!`
+		switch (username) {
+			case 'wiuf': text = 'Er I klar til at tabe? Planetens største woke klunke er joinet.'; break;
+			case 'jacob': text = 'jacobo vil spille'; break;
+			case 'lbenediktson': text = 'Lukas er gangster'; break;
+			case 'piaerbillig': text = 'albino bertram'; break;
+			case 'socialakavet': text = 'jimmy joint in the house'; break;
+			default: text = `hva så ${username}, du stadig en fucking bums!`; break;
 		}
 
 		// Construct the request
 		const request = {
 			input: { text: text },
-			// Select the language and SSML voice gender (optional)
-			voice: { languageCode: 'da-DK', ssmlGender: 'MALE' },
-			// select the type of audio encoding
-			audioConfig: { audioEncoding: 'MP3' },
+			voice: { languageCode: 'da-DK', ssmlGender: 'MALE' }, // Select the language and SSML voice gender (optional)
+			audioConfig: { audioEncoding: 'MP3' }, // type of audio encoding
 		}
 
 		try {
 			// Performs the text-to-speech request
 			const [response] = await client.synthesizeSpeech(request)
 		} catch (err) {
-			console.log('fejl på linje 77: [createAndPlayAudio]', err)
+			console.log('Error in [createAndPlayAudio]: ', err)
 		}
 
 		// Write the binary audio content to a local file
@@ -84,18 +79,18 @@ const createAndPlayAudio = (username, channelID) => {
 		} catch (err) {
 			console.log('fejl på linje 85 [createAndPlayAudio]:', err)
 		}
-		console.log('Audio content written to file: output.mp3')
+		console.log(`Audio content written to file: ${username}.mp3`)
 		setTimeout(() => playAudio(channelID, username), 1200)
 	}
-	quickStart()
 }
 
 bot.on('voiceStateUpdate', (oldMember, newMember) => {
 	const newUserChannel = newMember.channelID
 	const oldUserChannel = oldMember.channelID
+	const newUserJoined = !oldUserChannel && newUserChannel
 
 	// new user joins voice channel
-	if (!oldUserChannel && newUserChannel) {
+	if (newUserJoined) {
 		const username = bot.users.cache.get(newMember.id).username.toLowerCase() // Getting the user by ID.
 		console.log(username)
 		if ('karsepik-bot' !== username && 'rythm' !== username) {
@@ -112,42 +107,14 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 			})
 		}
 
-		// user leaves voice channel
-	} else if (!newUserChannel) {
-		const user = bot.users.cache.get(newMember.id) // Getting the user by ID.
-		if (user) {
-			// createAndPlayAudio(user.username, 'bye')
-		} else {
-			console.log('fejl på 119')
-		}
 	}
+	// user leaves voice channel
+	// else if (!newUserChannel) {
+	// 	const user = bot.users.cache.get(newMember.id) // Getting the user by ID.
+	// 	if (user) {
+	// 		// createAndPlayAudio(user.username, 'bye')
+	// 	} else {
+	// 		console.log('fejl på 119')
+	// 	}
+	// }
 })
-
-// Import other required libraries
-// const fs = require('fs')
-// const util = require('util')
-// // Creates a client
-// const client = new textToSpeech.TextToSpeechClient()
-// async function quickStart() {
-// 	// The text to synthesize
-// 	const text = 'Hej ristian!'
-
-// 	// Construct the request
-// 	const request = {
-// 		input: { text: text },
-// 		// Select the language and SSML voice gender (optional)
-// 		voice: { languageCode: 'da-DK', ssmlGender: 'MALE' },
-// 		// select the type of audio encoding
-// 		audioConfig: { audioEncoding: 'MP3' },
-// 	}
-
-// 	// Performs the text-to-speech request
-// 	const [response] = await client.synthesizeSpeech(request)
-// 	// Write the binary audio content to a local file
-// 	const writeFile = util.promisify(fs.writeFile)
-// 	await writeFile('output.mp3', response.audioContent, 'binary')
-// 	console.log('Audio content written to file: output.mp3')
-// }
-// quickStart()
-
-// bot token: Nzk4Njk2NDQ2NzQ0MzMwMjYx.X_4yBw.4oEuiHirlyHwO5TMpKKF2uJpRtA
