@@ -17,7 +17,7 @@ function getUserMessage(context, username) {
 		welcome: {
 			wiuf: 'Er I klar til at tabe? Planetens største woke klunke er joinet.',
 			jacob: 'jacobo vil spille',
-			lbenediktson: 'lukas den største champion',
+			lbenediktson: 'lukas den største champion. bing bong motherfucker',
 			piaerbillig: 'albino bertram',
 			socialakavet: 'jimmy joint in the house',
 			default: `hva så ${username}, du stadig en fucking bums!`
