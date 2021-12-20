@@ -18,9 +18,9 @@ function getUserMessage(context, username) {
 		default: 'hva så motherfucker',
 		welcome: {
 			wiuf: 'Er I klar til at tabe? Planetens største woke klunke er joinet.',
-			jacob: 'jacobo vil spille pik',
+			jacob: 'jacobo vil spille pik. what you wanna tell joe biden right now? What is up, baby. take me out to dinner. AYYOOOOO',
 			lbenediktson: 'lukas den største champion. what you have to say to joe biden? bing bong motherfucker',
-			piaerbillig: 'albino bertram er oppe i din bitch. bing. bong. motherfucker. ',
+			piaerbillig: 'albino bertram er oppe i din bitch. bing. bong. motherfucker.',
 			socialakavet: 'jimmy joint in the house',
 			kasperuttrup: 'Chris Peacock op i den bitch. Corona-alarm, Corona-alarm, Corona-alarm. Manden har i øvrigt 11 centimeter lange hængenosser.',
 			default: `hva så ${username}, du stadig en fucking bums!`
