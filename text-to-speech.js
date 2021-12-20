@@ -54,7 +54,7 @@ const createAndPlayAudio = (username, channelID) => {
 		switch (username) {
 			case 'wiuf': text = 'Er I klar til at tabe? Planetens største woke klunke er joinet.'; break;
 			case 'jacob': text = 'jacobo vil spille'; break;
-			case 'lbenediktson': text = 'Lukas er gangster'; break;
+			case 'lbenediktson': text = 'lukas den største champion'; break;
 			case 'piaerbillig': text = 'albino bertram'; break;
 			case 'socialakavet': text = 'jimmy joint in the house'; break;
 			default: text = `hva så ${username}, du stadig en fucking bums!`; break;
