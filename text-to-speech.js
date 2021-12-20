@@ -17,12 +17,13 @@ bot.on('ready', () => console.log('logged ind'))
 
 const playAudio = async (channelID, username) => {
 	const channel = bot.channels.cache.get(channelID)
-	const userAudioPath = `./users/welcome/${username}`
+	const userAudioPath = `./users/welcome/${username}.mp3`
 
 	channel
 		.join()
 		.then((connection) => {
 			// const dispatcher = connection.play(`./users/welcome/wiuf.mp3`) // DEV
+			console.log({userAudioPath})
 			const dispatcher = connection.play(userAudioPath) // PROD
 			dispatcher.on('start', () => {
 				console.log('audio is now playing from: ' + userAudioPath)
@@ -102,7 +103,7 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 					console.log(files.indexOf(`${username}.mp3`))
 					;-1 !== files.indexOf(`${username}.mp3`)
 						? setTimeout(() => playAudio(newUserChannel, username), 1200)
-						: null// createAndPlayAudio(username, newUserChannel)
+						: null // createAndPlayAudio(username, newUserChannel)
 				}
 			})
 		}
