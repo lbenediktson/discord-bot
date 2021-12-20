@@ -22,8 +22,8 @@ const playAudio = async (channelID, username) => {
 	channel
 		.join()
 		.then((connection) => {
-			const dispatcher = connection.play(`./users/welcome/wiuf.mp3`)
-			// const dispatcher = connection.play(userAudioPath)
+			// const dispatcher = connection.play(`./users/welcome/wiuf.mp3`) // DEV
+			const dispatcher = connection.play(userAudioPath) // PROD
 			dispatcher.on('start', () => {
 				console.log('audio is now playing from: ' + userAudioPath)
 			})
