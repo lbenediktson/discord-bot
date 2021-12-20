@@ -1,5 +1,6 @@
 const fs = require('fs')
 const util = require('util')
+const promisifiedWriteFile = util.promisify(fs.writeFile)
 const { createHash } = require('crypto');
 require('dotenv').config()
 
@@ -17,6 +18,12 @@ const bot = new Discord.Client()
 const apiKeys = {
 	discord: process.env.DISCORD_BOT_API
 }
+
+// Blacklisted users
+const userBlackList = [
+	'karsepik-bot',
+	'rythm',
+]
 
 
 
@@ -68,7 +75,7 @@ function getUserMessage(context, username) {
 //	Initialize Discord Bot
 // –––––––––––––––––––––––––––––––––––––––––––––––––––
 
-bot.login(apiKeys.discord)
+// bot.login(apiKeys.discord)
 bot.on('ready', () => console.log('logged ind'))
 bot.on('voiceStateUpdate', (oldMember, newMember) => {
 	const newUserChannel = newMember.channelID
@@ -78,22 +85,22 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 
 	const username = bot.users.cache.get(newMember.id).username.toLowerCase() // Getting the user by ID.
 	
-	// new user joins voice channel
-	if ('karsepik-bot' !== username && 'rythm' !== username) {
-		if (userJoined) {
-			fs.readdir(`./users/welcome/`, (err, files) => {
-				if (err) {
-					console.log(err)
-				} else if (files) {
-					const userMessage = getUserMessage('welcome', username)
-					const filenameHash = createHashFromString(userMessage)
+	// new user joins voice channel. not black listed
+	if (userBlackList.includes(username)) return
+	
 
-					;-1 !== files.indexOf(`${filenameHash}.mp3`)
-						? setTimeout(() => playAudio(newUserChannel, filenameHash), meta.timeout)
-						: createAndPlayAudio(username, newUserChannel, filenameHash)
-				}
-			})
-		}
+	if (userJoined) {
+		fs.readdir(`./users/welcome/`, (err, files) => {
+			if (err) return console.error(err)
+			if (files) {
+				const userMessage = getUserMessage('welcome', username)
+				const filenameHash = createHashFromString(userMessage)
+
+				;-1 !== files.indexOf(`${filenameHash}.mp3`)
+					? setTimeout(() => playAudio(newUserChannel, filenameHash), meta.timeout)
+					: createAndPlayAudio(username, newUserChannel, filenameHash)
+			}
+		})
 	}
 })
 
@@ -111,39 +118,20 @@ async function createAndPlayAudio(username, channelID, hash = undefined) {
 	const client = new textToSpeech.TextToSpeechClient()
 	let speechResponse
 	
-	quickStart()
-	async function quickStart() {
-		// The text to synthesize
-		let text = getUserMessage('welcome', username)
+	// The text to synthesize
+	let text = getUserMessage('welcome', username)
 
-		// Construct the request
-		const request = {
-			input: { text: text },
-			voice: {
-				name: meta.speechName.name,
-				languageCode: meta.speechName.languageCode,
-			},
-			audioConfig: { audioEncoding: 'MP3' }, // type of audio encoding
-		}
+	// Construct the request
+	const request = getSpeechRequest()
 
-		try {
-			// Performs the text-to-speech request
-			const [response] = await client.synthesizeSpeech(request)
-			speechResponse = response
-		} catch (err) {
-			console.log('Error in [createAndPlayAudio]: ', err)
-		}
+	const [response] = client.synthesizeSpeech(request)
+	if (!response.audioContent) throw new Error(response)
+	const { audoContent } = response
 
-		// Write the binary audio content to a local file
-		const writeFile = util.promisify(fs.writeFile)
-		try {
-			await writeFile(`./users/welcome/${hash}.mp3`, speechResponse.audioContent, 'binary')
-		} catch (err) {
-			console.log('fejl på linje 85 [createAndPlayAudio]:', err)
-		}
-		console.log(`Audio content written to file: ${hash}.mp3`)
-		setTimeout(() => playAudio(channelID, hash), meta.timeout)
-	}
+	promisifiedWriteFile(`./users/welcome/${hash}.mp3`, audoContent, 'binary')
+		.catch(console.error)
+
+	setTimeout(() => playAudio(channelID, hash), meta.timeout)
 }
 
 
@@ -162,10 +150,10 @@ function playAudio(channelID, filename) {
 			const dispatcher = connection.play(userAudioPath) // PROD
 			// dispatcher.on('start', () => console.log('audio is now playing from: ' + userAudioPath))
 			dispatcher.on('finish', () => connection.disconnect())
-			dispatcher.on('error', (err) => console.log('fejl i [playAudio]:', err))
+			dispatcher.on('error', (err) => console.error('fejl i [playAudio]:', err))
 		})
 		.catch((err) => {
-			console.log('Error in [playAudio]:', err)
+			console.error('Error in [playAudio]:', err)
 			connection.disconnect()
 		})
 }
@@ -175,6 +163,16 @@ function playAudio(channelID, filename) {
 // –––––––––––––––––––––––––––––––––––––––––––––––––––
 //	Utility functions
 // –––––––––––––––––––––––––––––––––––––––––––––––––––
+
+function getSpeechRequest() {
+	return { input: { text: text },
+		voice: {
+			name: meta.speechName.name,
+			languageCode: meta.speechName.languageCode,
+		},
+		audioConfig: { audioEncoding: 'MP3' }, // type of audio encoding
+	}
+}
 
 function createHashFromString(string) {
 	const hash = createHash('sha256')
