@@ -1,17 +1,48 @@
-// Imports the Google Cloud client library
-const textToSpeech = require('@google-cloud/text-to-speech')
-const Discord = require('discord.js')
 const fs = require('fs')
-const { createHash } = require('crypto');
 const util = require('util')
-const bot = new Discord.Client()
-
+const { createHash } = require('crypto');
 require('dotenv').config()
 
+
+// Imports the Google Cloud client library
+const textToSpeech = require('@google-cloud/text-to-speech')
+
+// Discord
+const Discord = require('discord.js')
+const bot = new Discord.Client()
+
+
+
+// Api Keys
 const apiKeys = {
 	discord: process.env.DISCORD_BOT_API
 }
-const timeoutBeforePlaying = 1200
+
+
+
+// –––––––––––––––––––––––––––––––––––––––––––––––––––
+//	Meta: Config
+// –––––––––––––––––––––––––––––––––––––––––––––––––––
+
+const meta = {
+	speechNameDictionary: [
+		{ gender: 'f', type: 'standard', name: 'da-DK-Standard-E', languageCode: 'da-DK' },
+		{ gender: 'f', type: 'wavenet', name: 'da-DK-Wavenet-E', languageCode: 'da-DK' },
+		{ gender: 'm', type: 'standard', name: 'da-DK-Standard-C', languageCode: 'da-DK' },
+		{ gender: 'm', type: 'wavenet', name: 'da-DK-Wavenet-C', languageCode: 'da-DK' },
+	], // https://cloud.google.com/text-to-speech/docs/voices
+	get speechName () {
+		return this.speechNameDictionary.find(s => (
+			(s.gender       === this.speechGender &&
+			 s.type         === this.speechType &&
+			 s.languageCode === this.languageCode) || Math.floor(Math.random() * this.speechNameDictionary.length))
+		)
+	},
+	lang: 'da-DK',
+	speechGender: 'm',
+	speechType: 'wavenet',
+	timeout: 1200, // timeout before playing sound
+}
 
 function getUserMessage(context, username) {
 	const userMessages = {
@@ -26,83 +57,19 @@ function getUserMessage(context, username) {
 			default: `hva så ${username}, du stadig en fucking bums!`
 		}
 	}
-	
 	return userMessages[context][username] ||
 		   userMessages[context].default ||
 		   userMessages.default
 }
 
-function createHashFromString(string) {
-	const hash = createHash('sha256')
-	hash.update(string)
-	return hash.digest('hex')
-}
+
+
+// –––––––––––––––––––––––––––––––––––––––––––––––––––
+//	Initialize Discord Bot
+// –––––––––––––––––––––––––––––––––––––––––––––––––––
 
 bot.login(apiKeys.discord)
-
 bot.on('ready', () => console.log('logged ind'))
-
-const playAudio = async (channelID, filename) => {
-	const channel = bot.channels.cache.get(channelID)
-	const userAudioPath = `./users/welcome/${filename}.mp3`
-
-	channel
-		.join()
-		.then((connection) => {
-			const dispatcher = connection.play(userAudioPath) // PROD
-			// dispatcher.on('start', () => console.log('audio is now playing from: ' + userAudioPath))
-			dispatcher.on('finish', () => connection.disconnect())
-			dispatcher.on('error', (err) => console.log('fejl i [playAudio]:', err))
-		})
-		.catch((err) => {
-			console.log('Error in [playAudio]:', err)
-			connection.disconnect()
-		})
-}
-
-const createAndPlayAudio = (username, channelID, hash = undefined) => {
-	if (!hash) hash = username
-	console.log('Creates audio for ' + hash)
-	// Creates a client
-	const client = new textToSpeech.TextToSpeechClient()
-	let speechResponse
-	
-	quickStart()
-	async function quickStart() {
-		// The text to synthesize
-		let text = getUserMessage('welcome', username)
-
-		// Construct the request
-		const request = {
-			input: { text: text },
-			voice: {
-				name: 'da-DK-Wavenet-C', // wavenet: woman: da-DK-Wavenet-E, man: da-DK-Wavenet-C
-				languageCode: 'da-DK',
-				// ssmlGender: 'MALE',
-			}, // Select the language and SSML voice gender (optional)
-			audioConfig: { audioEncoding: 'MP3' }, // type of audio encoding
-		}
-
-		try {
-			// Performs the text-to-speech request
-			const [response] = await client.synthesizeSpeech(request)
-			speechResponse = response
-		} catch (err) {
-			console.log('Error in [createAndPlayAudio]: ', err)
-		}
-
-		// Write the binary audio content to a local file
-		const writeFile = util.promisify(fs.writeFile)
-		try {
-			await writeFile(`./users/welcome/${hash}.mp3`, speechResponse.audioContent, 'binary')
-		} catch (err) {
-			console.log('fejl på linje 85 [createAndPlayAudio]:', err)
-		}
-		console.log(`Audio content written to file: ${hash}.mp3`)
-		setTimeout(() => playAudio(channelID, hash), timeoutBeforePlaying)
-	}
-}
-
 bot.on('voiceStateUpdate', (oldMember, newMember) => {
 	const newUserChannel = newMember.channelID
 	const oldUserChannel = oldMember.channelID
@@ -122,10 +89,95 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 					const filenameHash = createHashFromString(userMessage)
 
 					;-1 !== files.indexOf(`${filenameHash}.mp3`)
-						? setTimeout(() => playAudio(newUserChannel, filenameHash), timeoutBeforePlaying)
+						? setTimeout(() => playAudio(newUserChannel, filenameHash), meta.timeout)
 						: createAndPlayAudio(username, newUserChannel, filenameHash)
 				}
 			})
 		}
 	}
 })
+
+
+
+// –––––––––––––––––––––––––––––––––––––––––––––––––––
+//	Text to Speech
+// –––––––––––––––––––––––––––––––––––––––––––––––––––
+
+async function createAndPlayAudio(username, channelID, hash = undefined) {
+	if (!hash) hash = username
+	console.log('Creates audio for ' + hash)
+
+	// Creates a client
+	const client = new textToSpeech.TextToSpeechClient()
+	let speechResponse
+	
+	quickStart()
+	async function quickStart() {
+		// The text to synthesize
+		let text = getUserMessage('welcome', username)
+
+		// Construct the request
+		const request = {
+			input: { text: text },
+			voice: {
+				name: meta.speechName.name,
+				languageCode: meta.speechName.languageCode,
+			},
+			audioConfig: { audioEncoding: 'MP3' }, // type of audio encoding
+		}
+
+		try {
+			// Performs the text-to-speech request
+			const [response] = await client.synthesizeSpeech(request)
+			speechResponse = response
+		} catch (err) {
+			console.log('Error in [createAndPlayAudio]: ', err)
+		}
+
+		// Write the binary audio content to a local file
+		const writeFile = util.promisify(fs.writeFile)
+		try {
+			await writeFile(`./users/welcome/${hash}.mp3`, speechResponse.audioContent, 'binary')
+		} catch (err) {
+			console.log('fejl på linje 85 [createAndPlayAudio]:', err)
+		}
+		console.log(`Audio content written to file: ${hash}.mp3`)
+		setTimeout(() => playAudio(channelID, hash), meta.timeout)
+	}
+}
+
+
+
+// –––––––––––––––––––––––––––––––––––––––––––––––––––
+//	Play Audio
+// –––––––––––––––––––––––––––––––––––––––––––––––––––
+
+function playAudio(channelID, filename) {
+	const channel = bot.channels.cache.get(channelID)
+	const userAudioPath = `./users/welcome/${filename}.mp3`
+
+	channel
+		.join()
+		.then((connection) => {
+			const dispatcher = connection.play(userAudioPath) // PROD
+			// dispatcher.on('start', () => console.log('audio is now playing from: ' + userAudioPath))
+			dispatcher.on('finish', () => connection.disconnect())
+			dispatcher.on('error', (err) => console.log('fejl i [playAudio]:', err))
+		})
+		.catch((err) => {
+			console.log('Error in [playAudio]:', err)
+			connection.disconnect()
+		})
+}
+
+
+
+// –––––––––––––––––––––––––––––––––––––––––––––––––––
+//	Utility functions
+// –––––––––––––––––––––––––––––––––––––––––––––––––––
+
+function createHashFromString(string) {
+	const hash = createHash('sha256')
+	hash.update(string)
+	return hash.digest('hex')
+}
