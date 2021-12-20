@@ -22,6 +22,7 @@ function getUserMessage(context, username) {
 			lbenediktson: 'lukas den største champion. what you have to say to joe biden? bing bong motherfucker',
 			piaerbillig: 'albino bertram',
 			socialakavet: 'jimmy joint in the house',
+			kasperuttrup: 'Chris Peacock op i den bitch. Corona-alarm, Corona-alarm, Corona-alarm. Manden har i øvrigt 11 centimeter lange hængenosser.',
 			default: `hva så ${username}, du stadig en fucking bums!`
 		}
 	}
@@ -101,12 +102,14 @@ const createAndPlayAudio = (username, channelID, hash = undefined) => {
 bot.on('voiceStateUpdate', (oldMember, newMember) => {
 	const newUserChannel = newMember.channelID
 	const oldUserChannel = oldMember.channelID
-	const newUserJoined = !oldUserChannel && newUserChannel
+	const userJoined = !oldUserChannel && newUserChannel
+	const userLeft = oldUserChannel && !newUserChannel
 
+	const username = bot.users.cache.get(newMember.id).username.toLowerCase() // Getting the user by ID.
+	
 	// new user joins voice channel
-	if (newUserJoined) {
-		const username = bot.users.cache.get(newMember.id).username.toLowerCase() // Getting the user by ID.
-		if ('karsepik-bot' !== username && 'rythm' !== username) {
+	if ('karsepik-bot' !== username && 'rythm' !== username) {
+		if (userJoined) {
 			fs.readdir(`./users/welcome/`, (err, files) => {
 				if (err) {
 					console.log(err)
@@ -120,6 +123,5 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 				}
 			})
 		}
-
 	}
 })
