@@ -2,7 +2,9 @@
 const textToSpeech = require('@google-cloud/text-to-speech')
 const Discord = require('discord.js')
 const fs = require('fs')
+const { createHash } = require('crypto');
 const util = require('util')
+const crypto = require('crypto');
 const bot = new Discord.Client()
 
 require('dotenv').config()
@@ -10,6 +12,7 @@ require('dotenv').config()
 const apiKeys = {
 	discord: process.env.DISCORD_BOT_API
 }
+const timeoutBeforePlaying = 1200
 
 function getUserMessage(context, username) {
 	const userMessages = {
@@ -17,7 +20,7 @@ function getUserMessage(context, username) {
 		welcome: {
 			wiuf: 'Er I klar til at tabe? Planetens største woke klunke er joinet.',
 			jacob: 'jacobo vil spille',
-			lbenediktson: 'lukas den største champion. bing bong motherfucker',
+			lbenediktson: 'lukas den største champion. what you have to say to joe biden? bing bong motherfucker',
 			piaerbillig: 'albino bertram',
 			socialakavet: 'jimmy joint in the house',
 			default: `hva så ${username}, du stadig en fucking bums!`
@@ -29,13 +32,19 @@ function getUserMessage(context, username) {
 		   userMessages.default
 }
 
-bot.login(apiKeys.discord)
+function getHashFromString(string) {
+	const hash = createHash('sha256')
+	hash.update(string)
+	return hash.digest('hex')
+}
+
+// bot.login(apiKeys.discord)
 
 bot.on('ready', () => console.log('logged ind'))
 
-const playAudio = async (channelID, username) => {
+const playAudio = async (channelID, filename) => {
 	const channel = bot.channels.cache.get(channelID)
-	const userAudioPath = `./users/welcome/${username}.mp3`
+	const userAudioPath = `./users/welcome/${filename}.mp3`
 
 	channel
 		.join()
@@ -60,10 +69,13 @@ const playAudio = async (channelID, username) => {
 		})
 }
 
-const createAndPlayAudio = (username, channelID) => {
+const createAndPlayAudio = (username, channelID, hash = undefined) => {
+	console.log(hash)
+	if (!hash) hash = username
 	// Creates a client
 	const client = new textToSpeech.TextToSpeechClient()
 	let speechResponse
+	
 	quickStart()
 	async function quickStart() {
 		// The text to synthesize
@@ -87,12 +99,12 @@ const createAndPlayAudio = (username, channelID) => {
 		// Write the binary audio content to a local file
 		const writeFile = util.promisify(fs.writeFile)
 		try {
-			await writeFile(`./users/welcome/${username}.mp3`, speechResponse.audioContent, 'binary')
+			await writeFile(`./users/welcome/${hash}.mp3`, speechResponse.audioContent, 'binary')
 		} catch (err) {
 			console.log('fejl på linje 85 [createAndPlayAudio]:', err)
 		}
-		console.log(`Audio content written to file: ${username}.mp3`)
-		setTimeout(() => playAudio(channelID, username), 1200)
+		console.log(`Audio content written to file: ${hash}.mp3`)
+		setTimeout(() => playAudio(channelID, hash), timeoutBeforePlaying)
 	}
 }
 
@@ -104,30 +116,19 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 	// new user joins voice channel
 	if (newUserJoined) {
 		const username = bot.users.cache.get(newMember.id).username.toLowerCase() // Getting the user by ID.
-		console.log(username)
 		if ('karsepik-bot' !== username && 'rythm' !== username) {
 			fs.readdir(`./users/welcome/`, (err, files) => {
 				if (err) {
 					console.log(err)
 				} else if (files) {
-					console.log('files [voiceStateUpdate]:', files, `username: ${username}`)
-					console.log(files.indexOf(`${username}.mp3`))
-					createAndPlayAudio(username, newUserChannel)
-					// ;-1 !== files.indexOf(`${username}.mp3`)
-					// 	? setTimeout(() => playAudio(newUserChannel, username), 1200)
-					// 	: null // createAndPlayAudio(username, newUserChannel)
+					const filenameHash = getHashFromString(getUserMessage('welcome', username))
+					// createAndPlayAudio(username, newUserChannel, filenameHash)
+					;-1 !== files.indexOf(`${filenameHash}.mp3`)
+						? setTimeout(() => playAudio(newUserChannel, filenameHash), timeoutBeforePlaying)
+						: createAndPlayAudio(username, newUserChannel, filenameHash)
 				}
 			})
 		}
 
 	}
-	// user leaves voice channel
-	// else if (!newUserChannel) {
-	// 	const user = bot.users.cache.get(newMember.id) // Getting the user by ID.
-	// 	if (user) {
-	// 		// createAndPlayAudio(user.username, 'bye')
-	// 	} else {
-	// 		console.log('fejl på 119')
-	// 	}
-	// }
 })
