@@ -101,9 +101,10 @@ bot.on('voiceStateUpdate', (oldMember, newMember) => {
 				} else if (files) {
 					console.log('files [voiceStateUpdate]:', files, `username: ${username}`)
 					console.log(files.indexOf(`${username}.mp3`))
-					;-1 !== files.indexOf(`${username}.mp3`)
-						? setTimeout(() => playAudio(newUserChannel, username), 1200)
-						: null // createAndPlayAudio(username, newUserChannel)
+					createAndPlayAudio(username, newUserChannel)
+					// ;-1 !== files.indexOf(`${username}.mp3`)
+					// 	? setTimeout(() => playAudio(newUserChannel, username), 1200)
+					// 	: null // createAndPlayAudio(username, newUserChannel)
 				}
 			})
 		}
