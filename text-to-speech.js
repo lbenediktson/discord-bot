@@ -75,7 +75,11 @@ const createAndPlayAudio = (username, channelID, hash = undefined) => {
 		// Construct the request
 		const request = {
 			input: { text: text },
-			voice: { languageCode: 'da-DK', ssmlGender: 'MALE' }, // Select the language and SSML voice gender (optional)
+			voice: {
+				name: 'da-DK-Wavenet-C', // wavenet: woman: da-DK-Wavenet-E, man: da-DK-Wavenet-C
+				languageCode: 'da-DK',
+				// ssmlGender: 'MALE',
+			}, // Select the language and SSML voice gender (optional)
 			audioConfig: { audioEncoding: 'MP3' }, // type of audio encoding
 		}
 
