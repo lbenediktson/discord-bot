@@ -45,6 +45,7 @@ const playAudio = async (channelID, username) => {
 const createAndPlayAudio = (username, channelID) => {
 	// Creates a client
 	const client = new textToSpeech.TextToSpeechClient()
+	let speechResponse
 	quickStart()
 	async function quickStart() {
 		// The text to synthesize
@@ -69,6 +70,7 @@ const createAndPlayAudio = (username, channelID) => {
 		try {
 			// Performs the text-to-speech request
 			const [response] = await client.synthesizeSpeech(request)
+			speechResponse = response
 		} catch (err) {
 			console.log('Error in [createAndPlayAudio]: ', err)
 		}
@@ -76,7 +78,7 @@ const createAndPlayAudio = (username, channelID) => {
 		// Write the binary audio content to a local file
 		const writeFile = util.promisify(fs.writeFile)
 		try {
-			await writeFile(`./users/welcome/${username}.mp3`, response.audioContent, 'binary')
+			await writeFile(`./users/welcome/${username}.mp3`, speechResponse.audioContent, 'binary')
 		} catch (err) {
 			console.log('fejl på linje 85 [createAndPlayAudio]:', err)
 		}
