@@ -11,6 +11,24 @@ const apiKeys = {
 	discord: process.env.DISCORD_BOT_API
 }
 
+function getUserMessage(context, username) {
+	const userMessages = {
+		default: 'hva så motherfucker',
+		welcome: {
+			wiuf: 'Er I klar til at tabe? Planetens største woke klunke er joinet.',
+			jacob: 'jacobo vil spille',
+			lbenediktson: 'lukas den største champion',
+			piaerbillig: 'albino bertram',
+			socialakavet: 'jimmy joint in the house',
+			default: `hva så ${username}, du stadig en fucking bums!`
+		}
+	}
+	
+	return userMessages[context][username] ||
+		   userMessages[context].default ||
+		   userMessages.default
+}
+
 bot.login(apiKeys.discord)
 
 bot.on('ready', () => console.log('logged ind'))
@@ -49,16 +67,7 @@ const createAndPlayAudio = (username, channelID) => {
 	quickStart()
 	async function quickStart() {
 		// The text to synthesize
-		let text
-
-		switch (username) {
-			case 'wiuf': text = 'Er I klar til at tabe? Planetens største woke klunke er joinet.'; break;
-			case 'jacob': text = 'jacobo vil spille'; break;
-			case 'lbenediktson': text = 'lukas den største champion'; break;
-			case 'piaerbillig': text = 'albino bertram'; break;
-			case 'socialakavet': text = 'jimmy joint in the house'; break;
-			default: text = `hva så ${username}, du stadig en fucking bums!`; break;
-		}
+		let text = getUserMessage('welcome', username)
 
 		// Construct the request
 		const request = {
